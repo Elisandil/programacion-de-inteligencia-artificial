@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "author": "Antonio",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0
+    },
+    {
+      "type": "analog-sensor",
+      "id": "sound1",
+      "top": -100,
+      "left": 150,
+      "attrs": { "label": "KY-038 (Ruido)" }
+    },
+    {
+      "type": "led",
+      "id": "led1",
+      "top": 50,
+      "left": 250,
+      "attrs": { "color": "red" }
+    }
+  ],
+  "connections": [
+    ["sound1:VCC", "esp:3V3", "red", []],
+    ["sound1:GND", "esp:GND.1", "black", []],
+    ["sound1:SIG", "esp:34", "green", []],
+    ["led1:A", "esp:2", "orange", []],
+    ["led1:C", "esp:GND.2", "black", []]
+  ]
+}
