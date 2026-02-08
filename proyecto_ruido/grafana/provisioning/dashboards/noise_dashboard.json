@@ -1,0 +1,173 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Nivel de Ruido en Tiempo Real",
+      "description": "Evolución temporal de los decibelios por ubicación",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 16, "x": 0, "y": 0 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ruido" },
+      "targets": [
+        {
+          "query": "from(bucket: \"ruido_ambiental\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ruido_ambiental\")\n  |> filter(fn: (r) => r._field == \"decibeles\")\n  |> group(columns: [\"ubicacion\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dB",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "orange", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "scheme",
+            "thresholdsStyle": { "mode": "area" }
+          }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "title": "Distribución por Nivel",
+      "description": "Porcentaje de lecturas por clasificación de ruido",
+      "type": "piechart",
+      "gridPos": { "h": 10, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ruido" },
+      "targets": [
+        {
+          "query": "from(bucket: \"ruido_ambiental\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ruido_ambiental\")\n  |> filter(fn: (r) => r._field == \"decibeles\")\n  |> group(columns: [\"nivel\"])\n  |> count()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "bajo" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "moderado" }, "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "alto" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "peligroso" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      }
+    },
+    {
+      "title": "Promedio por Ubicación",
+      "description": "Media de decibelios agrupada por ubicación",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ruido" },
+      "targets": [
+        {
+          "query": "from(bucket: \"ruido_ambiental\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ruido_ambiental\")\n  |> filter(fn: (r) => r._field == \"decibeles\")\n  |> group(columns: [\"ubicacion\"])\n  |> mean()\n  |> group()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dB",
+          "min": 0,
+          "max": 120,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "orange", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient"
+      }
+    },
+    {
+      "title": "Alertas de Ruido Peligroso",
+      "description": "Lecturas que superan los 85 dB",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ruido" },
+      "targets": [
+        {
+          "query": "from(bucket: \"ruido_ambiental\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ruido_ambiental\")\n  |> filter(fn: (r) => r._field == \"decibeles\")\n  |> filter(fn: (r) => r.nivel == \"peligroso\")\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 50)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "center" }
+        }
+      }
+    },
+    {
+      "title": "Estadísticas Globales",
+      "description": "Valores estadísticos del período seleccionado",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 18 },
+      "datasource": { "type": "influxdb", "uid": "influxdb_ruido" },
+      "targets": [
+        {
+          "query": "from(bucket: \"ruido_ambiental\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ruido_ambiental\")\n  |> filter(fn: (r) => r._field == \"decibeles\")\n  |> mean()\n  |> yield(name: \"promedio\")",
+          "refId": "promedio"
+        },
+        {
+          "query": "from(bucket: \"ruido_ambiental\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ruido_ambiental\")\n  |> filter(fn: (r) => r._field == \"decibeles\")\n  |> max()\n  |> yield(name: \"maximo\")",
+          "refId": "maximo"
+        },
+        {
+          "query": "from(bucket: \"ruido_ambiental\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ruido_ambiental\")\n  |> filter(fn: (r) => r._field == \"decibeles\")\n  |> min()\n  |> yield(name: \"minimo\")",
+          "refId": "minimo"
+        },
+        {
+          "query": "from(bucket: \"ruido_ambiental\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"ruido_ambiental\")\n  |> filter(fn: (r) => r._field == \"decibeles\")\n  |> count()\n  |> yield(name: \"total\")",
+          "refId": "total"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dB",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 85 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "textMode": "value_and_name",
+        "colorMode": "background"
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["iot", "ruido", "ambiental"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "title": "Monitor de Ruido Ambiental IoT",
+  "uid": "ruido-ambiental-dashboard",
+  "version": 1
+}
